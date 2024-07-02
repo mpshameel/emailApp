@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email List</title>
+</head>
+<body>
+    <h1>Emails</h1>
+    <ul>
+        <h1>Replies</h1>
+        <br>
+        {% for reply in repliesTest %}
+        <li>
+            <strong>Uid:</strong> {{ reply.uid }}<br>
+            <strong>Subject:</strong> {{ reply.subject }}<br>
+            <strong>From:</strong> {{ reply.from }}<br>
+            <strong>To:</strong> {{ reply.to }}<br>
+            <strong>Date:</strong> {{ reply.date }}<br>
+            <strong>Text:</strong> {{ reply.text }}<br>
+            <strong>Html:</strong> {{ reply.html }}<br>
+            <strong>Flags:</strong> {{ reply.flags }}<br>
+            <strong>CC:</strong> {{ reply.cc }}<br>
+            <strong>BCC:</strong> {{ reply.bcc }}<br>
+            <strong>Reply To:</strong> {{ reply.reply_to }}<br>
+            <strong>Headers:</strong>
+            <ul>
+                {% for key, value in reply.headers.items %}
+                    <li>{{ key }}: {{ value }}</li>
+                {% endfor %}
+            </ul>
+
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
