@@ -1,5 +1,8 @@
+import profile
+from paramiko import Channel
 from rest_framework import serializers
-from .models import mailBox, mailBox_attachments
+from .models import channel, mailBox, mailBox_attachments, profile
+from django.contrib.auth.models import User
 
 class EmailSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -52,6 +55,15 @@ class mailBoxSerializer(serializers.ModelSerializer):
             'attachements',
         ]
 
+
+class EmailCredentialSerializer(serializers.Serializer):
+    email_id = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+class EmailRequestSerializer(serializers.Serializer):
+    page_no = serializers.IntegerField()
+    credentials = serializers.ListField(child=EmailCredentialSerializer())
+
 class ReplySerializer(serializers.Serializer):
     class Meta:
         uid = serializers.CharField(max_length=255)
@@ -78,3 +90,41 @@ class ReplySerializer(serializers.Serializer):
     #     if 'html' in ret and isinstance(ret['html'], str):
     #         ret['html'] = ret['html'].replace('\\"', '"')
     #     return ret
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
+class SuperUserSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    password = serializers.CharField(write_only=True)
+    email_id = serializers.EmailField()
+    channels = serializers.PrimaryKeyRelatedField(queryset=channel.objects.all(), many=True, required=False)
+
+class ChannelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = channel
+        fields = ['id', 'name']
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(source='username',read_only=True)
+    channels = ChannelSerializer(source='channel', many=True)
+    profile_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = profile
+        fields = ['profile_id', 'phone', 'alternative_phone', 'dob', 'image', 'usertype','createdBy','channels','user']
+
+    def get_profile_id(self, obj):
+        return obj.id
+    
+
+class ChannelAssignSerializer(serializers.Serializer):
+    profile_id = serializers.PrimaryKeyRelatedField(queryset=profile.objects.all(), many=False, required=False)
+    channel_ids = serializers.PrimaryKeyRelatedField(queryset=channel.objects.all(), many=True, required=False)
+

@@ -1,8 +1,22 @@
 from django.db import models
 from django.contrib.auth.models import User
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-# Create your models here.
 
+
+class channel(models.Model):
+    name = models.CharField(max_length=100,null=True,blank=True)
+
+class profile(models.Model):
+    username = models.ForeignKey(User,on_delete=models.CASCADE)
+    phone = models.BigIntegerField(null=True, blank=True)
+    alternative_phone = models.CharField(max_length=100,null=False,blank=True)
+    dob = models.CharField(max_length=100,null=False,blank=True)
+    image = models.ImageField(upload_to='profile-pic',null=True,blank=True)
+    usertype = models.CharField(max_length=100,null=False,blank=True)
+    channel = models.ManyToManyField(channel, blank=True)
+    createdBy = models.CharField(max_length=100,null=False,blank=True)
+    
 class mailBox_attachments(models.Model):
     file = models.FileField(upload_to='emailAttachments/')
     description = models.CharField(max_length=255, blank=True)
@@ -23,8 +37,8 @@ class mailBox(models.Model):
     text = models.CharField(max_length=100,null=True,blank=True)
     html = models.CharField(max_length=100,null=True,blank=True)
     flags = models.JSONField(default=list, blank=True,null=True)
-    cc = models.CharField(max_length=100,null=True,blank=True)
-    bcc = models.CharField(max_length=100,null=True,blank=True)
+    cc = models.JSONField(default=list, blank=True,null=True)
+    bcc = models.JSONField(default=list, blank=True,null=True)
     reply_to = models.CharField(max_length=100,null=True,blank=True)
     messageId = models.CharField(max_length=100,null=True,blank=True)
     attachements = models.ManyToManyField(mailBox_attachments, blank=True)
@@ -33,8 +47,8 @@ class mailBox(models.Model):
     status = models.CharField(max_length=100,default="open")
     is_deleted = models.BooleanField(default=False,blank=False,null=False,editable=True)
     created_at = models.DateTimeField(auto_now_add=True,blank=True, null=True)
-    aasignedTo = models.CharField(max_length=100,null=True,blank=True,default="")
-    channel = models.CharField(max_length=100,null=True,blank=True,default="")
+    aasignedTo = models.JSONField(default=list, blank=True,null=True)
+    channel = models.JSONField(default=list, blank=True,null=True)
     priority = models.CharField(max_length=100,null=True,blank=True,default="")
 
     def save(self, *args, **kwargs):
@@ -66,8 +80,8 @@ class sentBox(models.Model):
     text = models.CharField(max_length=100,null=True,blank=True)
     html = models.CharField(max_length=100,null=True,blank=True)
     flags = models.JSONField(default=list, blank=True,null=True)
-    cc = models.CharField(max_length=100,null=True,blank=True)
-    bcc = models.CharField(max_length=100,null=True,blank=True)
+    cc = models.JSONField(default=list, blank=True,null=True)
+    bcc = models.JSONField(default=list, blank=True,null=True)
     reply_to = models.CharField(max_length=100,null=True,blank=True)
     messageId = models.CharField(max_length=100,null=True,blank=True)
     attachements = models.ManyToManyField(sentBox_attachments, blank=True)
@@ -76,8 +90,8 @@ class sentBox(models.Model):
     status = models.CharField(max_length=100,default="open")
     is_deleted = models.BooleanField(default=False,blank=False,null=False,editable=True)
     created_at = models.DateTimeField(auto_now_add=True,blank=True, null=True)
-    aasignedTo = models.CharField(max_length=100,null=True,blank=True,default="")
-    channel = models.CharField(max_length=100,null=True,blank=True,default="")
+    aasignedTo = models.JSONField(default=list, blank=True,null=True)
+    channel = models.JSONField(default=list, blank=True,null=True)
     priority = models.CharField(max_length=100,null=True,blank=True,default="")
 
 
@@ -110,8 +124,8 @@ class draftBox(models.Model):
     text = models.CharField(max_length=100,null=True,blank=True)
     html = models.CharField(max_length=100,null=True,blank=True)
     flags = models.JSONField(default=list, blank=True,null=True)
-    cc = models.CharField(max_length=100,null=True,blank=True)
-    bcc = models.CharField(max_length=100,null=True,blank=True)
+    cc = models.JSONField(default=list, blank=True,null=True)
+    bcc = models.JSONField(default=list, blank=True,null=True)
     reply_to = models.CharField(max_length=100,null=True,blank=True)
     messageId = models.CharField(max_length=100,null=True,blank=True)
     attachements = models.ManyToManyField(draftBox_attachments, blank=True)
@@ -120,8 +134,8 @@ class draftBox(models.Model):
     status = models.CharField(max_length=100,default="open")
     is_deleted = models.BooleanField(default=False,blank=False,null=False,editable=True)
     created_at = models.DateTimeField(auto_now_add=True,blank=True, null=True)
-    aasignedTo = models.CharField(max_length=100,null=True,blank=True,default="")
-    channel = models.CharField(max_length=100,null=True,blank=True,default="")
+    aasignedTo = models.JSONField(default=list, blank=True,null=True)
+    channel = models.JSONField(default=list, blank=True,null=True)
     priority = models.CharField(max_length=100,null=True,blank=True,default="")
 
 

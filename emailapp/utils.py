@@ -189,11 +189,13 @@ def fetch_inbox(email_id, password, mail_server='imap.gmail.com', mail_port=993,
 
             to = parsed_emails
             flags = flags
-            cc = msg.get_all('Cc', [])
-            bcc = msg.get_all('Bcc', [])
-            reply_to = msg.get_all('Reply-To', [])
+            cc = [addr.strip() for addr in msg.get_all('Cc', [])]
+            bcc = [addr.strip() for addr in msg.get_all('Bcc', [])]
+            reply_to = [addr.strip() for addr in msg.get_all('Reply-To', [])]
             uid = email_id.decode('utf-8')
             headers = dict(msg.items())
+
+            print("-----------------------------------------------fff"+str(cc))
             
 
 
