@@ -124,7 +124,6 @@ def fetch_inbox(email_id, password, mail_server='imap.gmail.com', mail_port=993,
     emails = []
     try:
         for email_id in email_ids:
-            print("---------------------------------####")
             status, data = mail.fetch(email_id,  '(FLAGS BODY.PEEK[])')
             if status != 'OK':
                 print(f"Error fetching email ID {email_id}")
@@ -178,13 +177,18 @@ def fetch_inbox(email_id, password, mail_server='imap.gmail.com', mail_port=993,
                 elif content_type == "text/html":
                     html = body.decode()
 
-            # Extract flags
+            # Extract and clean flags
             flags = []
             for response_part in data:
                 if isinstance(response_part, tuple):
                     flag_response = response_part[0].decode()
                     if 'FLAGS' in flag_response:
-                        flags = flag_response.split('FLAGS')[1].strip().strip('()').split()
+                        raw_flags = flag_response.split('FLAGS')[1].strip().strip('()').split()
+                        for flag in raw_flags:
+                            cleaned_flag = flag.strip('\\').strip(')')
+                            if cleaned_flag in ['Seen', 'Answered', 'Delivered']:
+                                flags.append(cleaned_flag)
+
 
 
             to = parsed_emails
@@ -326,6 +330,7 @@ def fetch_sentEmail(email_id, password, mail_server='imap.gmail.com'):
 
                     attachments = []
                     attachments = extract_NonMultiAttachments(msg)
+                    cleaned_flags = [flag.lstrip('\\').lstrip('//') for flag in msg.flags]
                     
                     send.append(Msg(
                         username=username,
@@ -335,7 +340,7 @@ def fetch_sentEmail(email_id, password, mail_server='imap.gmail.com'):
                         date=msg.date,
                         text=msg.text,
                         html=msg.html,
-                        flags=msg.flags,
+                        flags=cleaned_flags,
                         cc=msg.cc,
                         bcc=msg.bcc,
                         reply_to=msg.reply_to,
@@ -400,6 +405,7 @@ def fetch_draftEmail(email_id, password, mail_server='imap.gmail.com'):
 
                     attachments = []
                     attachments = extract_NonMultiAttachments(msg)
+                    cleaned_flags = [flag.lstrip('\\').lstrip('//') for flag in msg.flags]
 
                     drafts.append(Msg(
                         username=username,
@@ -409,7 +415,7 @@ def fetch_draftEmail(email_id, password, mail_server='imap.gmail.com'):
                         date=msg.date,
                         text=msg.text,
                         html=msg.html,
-                        flags=msg.flags,
+                        flags=cleaned_flags,
                         cc=msg.cc,
                         bcc=msg.bcc,
                         reply_to=msg.reply_to,

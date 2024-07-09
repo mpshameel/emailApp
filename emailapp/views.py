@@ -143,7 +143,9 @@ class SentListView(APIView):
                     if existCheck:
                         pass
                     else:
-                        message_id = str(sent.headers.get('message-id'))
+                        message_id_tuple = sent.headers.get('message-id')
+                        message_id = message_id_tuple[0] if isinstance(message_id_tuple, tuple) else message_id_tuple
+                        message_id = message_id.strip() if message_id else ''
                         header = str(sent.headers)
                         inReplyTo = sent.headers.get('in-reply-to')
                         if inReplyTo is None:
@@ -220,7 +222,9 @@ class DraftsListView(APIView):
                     if existCheck:
                         pass
                     else:
-                        message_id = str(draft.headers.get('Message-ID'))
+                        message_id_tuple = draft.headers.get('message-id')
+                        message_id = message_id_tuple[0] if isinstance(message_id_tuple, tuple) else message_id_tuple
+                        message_id = message_id.strip() if message_id else ''
                         header = str(draft.headers)
                         inReplyTo = draft.headers.get('in-reply-to')
                         # if inReplyTo is None:
