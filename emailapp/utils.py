@@ -73,7 +73,7 @@ def process_email(msg):
     print(f"Attachments: {attachments}")
     print(f"-----------------------------------")
 
-def fetch_inbox(email_id, password, mail_server='imap.gmail.com', mail_port=993, max_emails=10):
+def fetch_inbox(email_id, password, mail_server='imap.gmail.com', mail_port=993, max_emails=20):
     class Msg:
         def __init__(self,username, subject, from_, to, date, text, html, flags, cc, bcc, reply_to, uid, headers, attachments):
             self.username = username
@@ -140,6 +140,7 @@ def fetch_inbox(email_id, password, mail_server='imap.gmail.com', mail_port=993,
             to = msg.get('To')
             from_ = msg.get('From')
             date = msg.get('Date')
+            
 
             # Process the 'To' field correctly
             to_addresses = [addr.strip() for addr in to.split(',')] if to else []
@@ -190,7 +191,6 @@ def fetch_inbox(email_id, password, mail_server='imap.gmail.com', mail_port=993,
                                 flags.append(cleaned_flag)
 
 
-
             to = parsed_emails
             flags = flags
             cc = [addr.strip() for addr in msg.get_all('Cc', [])]
@@ -199,7 +199,6 @@ def fetch_inbox(email_id, password, mail_server='imap.gmail.com', mail_port=993,
             uid = email_id.decode('utf-8')
             headers = dict(msg.items())
 
-            print("-----------------------------------------------fff"+str(cc))
             
 
 
@@ -434,7 +433,7 @@ def fetch_draftEmail(email_id, password, mail_server='imap.gmail.com'):
 
 
 
-def fetch_allMails(email_id, password, mail_server='imap.gmail.com', mail_port=993, max_emails=5):
+def fetch_allMails(email_id, password, mail_server='imap.gmail.com', mail_port=993, max_emails=20):
     class Msg:
         def __init__(self,username, subject, from_, to, date, text, html, flags, cc, bcc, reply_to, uid, headers, attachments):
             self.username = username

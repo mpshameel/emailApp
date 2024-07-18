@@ -1,7 +1,7 @@
 import profile
 from paramiko import Channel
 from rest_framework import serializers
-from .models import channel, mailBox, mailBox_attachments, profile
+from .models import channel, mailBox, mailBox_attachments, mailboxBundle, profile
 from django.contrib.auth.models import User
 
 class EmailSerializer(serializers.Serializer):
@@ -49,10 +49,11 @@ class mailBoxSerializer(serializers.ModelSerializer):
             'reply_to',
             'messageId',
             'status',
-            'aasignedTo',
+            'assignedTo',
             'channel',
             'priority',
             'attachements',
+            'in_reply_to'
         ]
 
 
@@ -63,6 +64,9 @@ class EmailCredentialSerializer(serializers.Serializer):
 class EmailRequestSerializer(serializers.Serializer):
     page_no = serializers.IntegerField()
     credentials = serializers.ListField(child=EmailCredentialSerializer())
+
+class EmailReplyRequestSerializer(serializers.Serializer):
+    message_id = serializers.CharField(max_length=255)
 
 class ReplySerializer(serializers.Serializer):
     class Meta:
@@ -128,3 +132,31 @@ class ChannelAssignSerializer(serializers.Serializer):
     profile_id = serializers.PrimaryKeyRelatedField(queryset=profile.objects.all(), many=False, required=False)
     channel_ids = serializers.PrimaryKeyRelatedField(queryset=channel.objects.all(), many=True, required=False)
 
+
+class MailboxBundleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = mailboxBundle
+        fields = ['id', 'email_id', 'password']
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = profile
+        fields = ['username', 'phone', 'image']
+
+    def validate_username(self, value):
+        if not User.objects.filter(id=value.id).exists():
+            raise serializers.ValidationError("User not found")
+        return value
+    
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = profile
+        fields = ['phone', 'image']
+
+class UpdateAssignedToSerializer(serializers.Serializer):
+    action = serializers.CharField()
+    uid = serializers.CharField()
+    messageId = serializers.CharField()
+    assignedTo = serializers.JSONField()

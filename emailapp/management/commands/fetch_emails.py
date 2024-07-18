@@ -63,3 +63,32 @@ class Command(BaseCommand):
                         return body
         return ''
 
+# \\\
+
+        # email_id = "fairoozfs2024@gmail.com"
+        # password = "xydhzuosvwnzeplp"
+        # messageId = "<CAMe7ZKJWuamE8Q7WMWqZTP4rKgPFNjmOTd2cG4urQRmbESjCOw@mail.gmail.com>"
+        
+        # ------------------------------------
+        # messageId = "('<CAMe7ZKJWuamE8Q7WMWqZTP4rKgPFNjmOTd2cG4urQRmbESjCOw@mail.gmail.com>')"
+
+        # allMails = fetch_allMails(email_id, password)
+
+        # allReplies = []
+
+        # masterEmail = fetch_idEmail(allMails,messageId)
+        # allReplies.extend(masterEmail)
+        # while messageId:
+        #     message_id, replies = fetch_repliesEmail(allMails, messageId)
+        #     if replies:
+        #         allReplies.extend(replies)
+        #     messageId = message_id
+        #     if not message_id:
+        #         break
+
+        # for reply in allReplies:
+        #     print(f"Reply from------------ {reply.from_}: {reply.subject} {reply.username}")
+
+        # serializer_detailMailReplies = mailBoxSerializer(allReplies, many=True)
+        # return Response(serializer_detailMailReplies.data, status=status.HTTP_200_OK)
+        # ---------------------------------------------

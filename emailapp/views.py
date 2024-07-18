@@ -1,13 +1,13 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 import re
 
 from paramiko import Channel
-from emailapp.models import channel, draftBox, draftBox_attachments, mailBox, mailBox_attachments, profile, sentBox, sentBox_attachments
+from emailapp.models import channel, draftBox, draftBox_attachments, mailBox, mailBox_attachments, mailboxBundle, profile, sentBox, sentBox_attachments
 from .utils import fetch_emailsTest, fetch_idEmail, fetch_inbox, extract_reply_chain, fetch_allMails, fetch_repliesEmail, fetch_sentEmail, fetch_draftEmail
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import ChannelAssignSerializer, ChannelSerializer, EmailCredentialSerializer, EmailRequestSerializer, EmailSerializer, LoginSerializer, ProfileSerializer, ReplySerializer, UserSerializer, mailBoxSerializer, SuperUserSerializer
+from .serializers import ChannelAssignSerializer, ChannelSerializer, EmailCredentialSerializer, EmailRequestSerializer, EmailSerializer, LoginSerializer, MailboxBundleSerializer, ProfileSerializer, ProfileUpdateSerializer, ReplySerializer, UpdateAssignedToSerializer, UserSerializer, mailBoxSerializer, SuperUserSerializer, EmailReplyRequestSerializer
 
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -27,6 +27,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.serializers import serialize
 
 
 def paginate_queryset(queryset, page_no, page_size=10):
@@ -65,12 +66,10 @@ class EmailListView(APIView):
                     # mailBox.objects.all().delete()
 
                     if existCheck:
-                        print("00000"+str(mail.headers))
                         pass
                     else:
                         message_id = str(mail.headers['Message-ID'])
                         inReplyTo = mail.headers.get('In-Reply-To')
-                        print("------------------------1"+str(inReplyTo))
                         if inReplyTo is None:
                             inReplyTo = []
                         mailbox = mailBox(
@@ -111,6 +110,9 @@ class EmailListView(APIView):
                         
                     # Query the mailBox objects from the database and serialize them 
                 mailboxes_with_empty_in_reply_to = mailBox.objects.filter(in_reply_to=[])
+                for i in mailboxes_with_empty_in_reply_to:
+                    print("-----------------------vvv"+str(i.assignedTo))
+
                 paginated_mailboxes = paginate_queryset(mailboxes_with_empty_in_reply_to, page_no)
                 serializer_mailBox = mailBoxSerializer(paginated_mailboxes, many=True)
 
@@ -227,8 +229,8 @@ class DraftsListView(APIView):
                         message_id = message_id.strip() if message_id else ''
                         header = str(draft.headers)
                         inReplyTo = draft.headers.get('in-reply-to')
-                        # if inReplyTo is None:
-                        inReplyTo = []
+                        if inReplyTo is None:
+                            inReplyTo = []
                         
                         draftBoxes = draftBox(
                             uid=draft.uid,
@@ -276,87 +278,70 @@ class DraftsListView(APIView):
     
 
 class EmailRepliesView(APIView):
-    def get(self, request, format=None):
-        class Msg:
-            def __init__(self,username, subject, from_, to, date, text, html, flags, cc, bcc, reply_to, uid, headers, attachments):
-                self.username = username
-                self.subject = subject
-                self.from_ = from_
-                self.to = to
-                self.date = date
-                self.text = text
-                self.html = html
-                self.flags = flags
-                self.cc = cc
-                self.bcc = bcc
-                self.reply_to = reply_to
-                self.uid = uid
-                self.headers = headers
-                self.attachments = attachments
+    permission_classes = [IsAuthenticated]
 
-        email_id = "fairoozfs2024@gmail.com"
-        password = "xydhzuosvwnzeplp"
-        messageId = "<CAMe7ZKJWuamE8Q7WMWqZTP4rKgPFNjmOTd2cG4urQRmbESjCOw@mail.gmail.com>"
-        
-        # ------------------------------------
-        # messageId = "('<CAMe7ZKJWuamE8Q7WMWqZTP4rKgPFNjmOTd2cG4urQRmbESjCOw@mail.gmail.com>')"
+    def post(self, request):
+        serializer = EmailReplyRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            messageId = serializer.validated_data['message_id']
+            current_message_id = messageId
 
-        # allMails = fetch_allMails(email_id, password)
+            allReplies = []
 
-        # allReplies = []
+            class Msg:
+                def __init__(self,username, subject, from_, to, date, text, html, flags, cc, bcc, reply_to, uid, headers, attachments):
+                    self.username = username
+                    self.subject = subject
+                    self.from_ = from_
+                    self.to = to
+                    self.date = date
+                    self.text = text
+                    self.html = html
+                    self.flags = flags
+                    self.cc = cc
+                    self.bcc = bcc
+                    self.reply_to = reply_to
+                    self.uid = uid
+                    self.headers = headers
+                    self.attachments = attachments
 
-        # masterEmail = fetch_idEmail(allMails,messageId)
-        # allReplies.extend(masterEmail)
-        # while messageId:
-        #     message_id, replies = fetch_repliesEmail(allMails, messageId)
-        #     if replies:
-        #         allReplies.extend(replies)
-        #     messageId = message_id
-        #     if not message_id:
-        #         break
+                inboxMails = mailBox.objects.all()
+                sentboxMails = sentBox.objects.all()
+                draftboxMails = draftBox.objects.all()
 
-        # for reply in allReplies:
-        #     print(f"Reply from------------ {reply.from_}: {reply.subject} {reply.username}")
+                print(serialize('json', inboxMails) + ";;;;;;;;;;;;;;;;;;;;;;;;;;")
 
-        # serializer_detailMailReplies = mailBoxSerializer(allReplies, many=True)
-        # return Response(serializer_detailMailReplies.data, status=status.HTTP_200_OK)
-        # ---------------------------------------------
+                serializer_mailBox = mailBoxSerializer(inboxMails, many=True)
+                serializer_sentBox = mailBoxSerializer(sentboxMails, many=True)
+                serializer_draftBox = mailBoxSerializer(draftboxMails, many=True)
 
-        masterMail = mailBox.objects.all()
-        sentbox = sentBox.objects.all()
-        draftbox = draftBox.objects.all()
+                allMails = serializer_mailBox.data + serializer_sentBox.data + serializer_draftBox.data
 
+                masterMail = [email for email in allMails if email.get('messageId') == messageId]
+                allReplies.extend(masterMail)
 
-        serializer_mailBox = mailBoxSerializer(masterMail, many=True)
-        serializer_sentBox = mailBoxSerializer(sentbox, many=True)
-        serializer_draftBox = mailBoxSerializer(draftbox, many=True)
+                print("-------------------------------------------ddd"+str(allReplies))
+                print("-------------------------------------vvv"+str(allMails[0]))
 
-        allMails = serializer_mailBox.data + serializer_sentBox.data + serializer_draftBox.data
+                while current_message_id:
+                    
+                    replies = [email for email in allMails if email.get('in_reply_to') == messageId]
+                    if replies:
+                        allReplies.extend(replies)
+                    print("---------------------cc"+str(replies))
 
-        allReplies = []
-        masterMail = [email for email in allMails if email.get('messageId') == messageId]
-        allReplies.extend(masterMail)
-
-        while messageId:
-            replies = [email for email in allMails if email.get('in_reply_to') == messageId]
-            # print("---------------------cc"+str(replies))
-            if replies:
-                allReplies.extend(replies)
-
-            messageId = replies['in-reply-to']
-            message_id= messageId
-            if not message_id:
-                break
-
-
-
-
-
-        # print("---------------------cc"+str(allReplies))
+                    messageId = replies['In_Reply_To']
+                    message_id= messageId
+                    if not message_id:
+                        break
 
                 
-        serializer_detailMailReplies = mailBoxSerializer(allMails, many=True)
-        return Response(serializer_detailMailReplies.data, status=status.HTTP_200_OK)
+                serializer_detailMailReplies = mailBoxSerializer(allMails, many=True)
+                # return Response(serializer_detailMailReplies.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+
 
 
 
@@ -446,6 +431,70 @@ class CreateUser(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+#edit user api
+class UpdateProfile(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        try:
+            # Get the currently authenticated user
+            user = request.user
+            
+            # Fetch the profile associated with the user
+            profile_id = profile.objects.get(username=user)
+        except profile.DoesNotExist:
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProfileUpdateSerializer(profile_id, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success': 'Profile updated successfully'}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+#user list get api
+class UserListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.is_superuser:
+            profile_list = profile.objects.filter(username__is_superuser=False)
+            serializer = ProfileSerializer(profile_list, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+class ProfileListView(generics.RetrieveAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return profile.objects.get(username=self.request.user)
+    
+#edit user api
+class UpdateProfile(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        try:
+            # Get the currently authenticated user
+            user = request.user
+            
+            # Fetch the profile associated with the user
+            profile_id = profile.objects.get(username=user)
+        except profile.DoesNotExist:
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProfileUpdateSerializer(profile_id, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success': 'Profile updated successfully'}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    
 #channel get api
 class ChannelListView(generics.ListAPIView):
     queryset = channel.objects.all()
@@ -474,27 +523,31 @@ class ChannelListCreateView(APIView):
     
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
-#user list get api
-class UserListView(APIView):
+#edit user api
+class UpdateChannel(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        if request.user.is_superuser:
-            profile_list = profile.objects.filter(username__is_superuser=False)
-            serializer = ProfileSerializer(profile_list, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    def put(self, request):
+        # Check if the user is a superuser
+        if not request.user.is_superuser:
+            return Response({'error': 'You have no permission to update this channel'}, status=status.HTTP_403_FORBIDDEN)
 
-class ProfileListView(generics.RetrieveAPIView):
-    serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated]
+        # Get channel data from request
+        channel_id = request.data.get('id')
+        channel_name = request.data.get('channel')
 
-    def get_object(self):
-        return profile.objects.get(username=self.request.user)
+        try:
+            # Fetch the channel to be updated
+            channel_instance = channel.objects.get(id=channel_id)
+        except channel.DoesNotExist:
+            return Response({'error': 'Channel not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Update the channel name
+        channel_instance.name = channel_name
+        channel_instance.save()
+
+        return Response({'success': 'Channel updated successfully'}, status=status.HTTP_200_OK)
     
-
 #channel post api
 class ChannelAssignUserView(APIView):
     permission_classes = [IsAuthenticated]
@@ -516,5 +569,150 @@ class ChannelAssignUserView(APIView):
                         profileObj.channel.add(channelId)
                     profileObj.save()
 
-                return Response({'success': 'Channels added successfully'}, status=status.HTTP_201_CREATED)
+                return Response({'success': 'Channels assigned successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+#channel get api
+class MailBoxBundleListView(generics.ListAPIView):
+    queryset = mailboxBundle.objects.all()
+    serializer_class = MailboxBundleSerializer
+    permission_classes = [IsAuthenticated]
+
+#channel post api
+class MailboxBundleCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        serializer = MailboxBundleSerializer(data=request.data)
+        if serializer.is_valid():
+            email_id = serializer.validated_data['email_id']
+            password = serializer.validated_data['password']
+
+            user_id = str(request.user.id)
+            
+            if not User.objects.filter(id=request.user.id, is_superuser=True).exists():
+                return Response({'error': 'Permission denied'}, status=status.HTTP_400_BAD_REQUEST)
+            if not email_id:  # Check if the channel name is empty
+                return Response({'error': 'Channel name cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
+            elif mailboxBundle.objects.filter(email_id=email_id).exists():
+                return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        
+            mailboxBundle(email_id=email_id,password=password).save()
+            return Response({'success': 'Mailbox created successfully'}, status=status.HTTP_201_CREATED)
+    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+#edit user api
+class UpdateMailboxBundle(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        # Check if the user is a superuser
+        if not request.user.is_superuser:
+            return Response({'error': 'You have no permission to update this channel'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Get channel data from request
+        mailbox_id = request.data.get('id')
+        mailbox_email = request.data.get('email')
+        mailbox_password = request.data.get('password')
+
+        try:
+            # Fetch the channel to be updated
+            mailbox_instance = mailboxBundle.objects.get(id=mailbox_id)
+        except channel.DoesNotExist:
+            return Response({'error': 'Mailbox not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Update the channel name
+        mailbox_instance.email_id = mailbox_email
+        mailbox_instance.password = mailbox_password
+        mailbox_instance.save()
+
+        return Response({'success': 'Mailbox updated successfully'}, status=status.HTTP_200_OK)
+    
+
+
+class UpdateAssignedToView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        serializer = UpdateAssignedToSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            action = serializer.validated_data['action']
+            uid = serializer.validated_data['uid']
+            messageId = serializer.validated_data['messageId']
+            assignedTo = serializer.validated_data['assignedTo']
+
+            # assign = profile.objects.get(id=assignedTo)
+            assign = get_object_or_404(profile, id=assignedTo)
+            
+            if action == 'UPDATE':
+                return self.update_assigned_to(uid, messageId, assign)
+            elif action == 'DELETE':
+                return self.delete_assigned_to(uid, messageId, assign)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def update_assigned_to(self, uid, messageId, assign):
+        # Try to update in mailBox
+        try:
+            mailbox_instance = mailBox.objects.get(uid=uid, messageId=messageId)
+            mailbox_instance.assignedTo.set(assign)
+            mailbox_instance.save()
+
+            print("-------------------------------ccc"+str(mailbox_instance.assignedTo))
+
+            return Response({'success': 'Mail assigned successfully in mailBox'}, status=status.HTTP_200_OK)
+        except mailBox.DoesNotExist:
+            pass
+        
+        # Try to update in sentBox
+        try:
+            sentbox_instance = sentBox.objects.get(uid=uid, messageId=messageId)
+            sentbox_instance.assignedTo = assign
+            sentbox_instance.save()
+            return Response({'success': 'Mail assigned successfullyin sentBox'}, status=status.HTTP_200_OK)
+        except sentBox.DoesNotExist:
+            pass
+        
+        # Try to update in draftBox
+        try:
+            draftbox_instance = draftBox.objects.get(uid=uid, messageId=messageId)
+            draftbox_instance.assignedTo = assign
+            draftbox_instance.save()
+            return Response({'success': 'Mail assigned successfully in draftBox'}, status=status.HTTP_200_OK)
+        except draftBox.DoesNotExist:
+            pass
+
+        return Response({'error': 'No matching record found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete_assigned_to(self, uid, messageId, assign):
+        # Try to delete in mailBox
+        try:
+            mailbox_instance = mailBox.objects.get(uid=uid, messageId=messageId)
+            mailbox_instance.assignedTo.remove(assign)
+            mailbox_instance.save()
+            return Response({'success': 'Assign deleted successfully in mailBox'}, status=status.HTTP_200_OK)
+        except mailBox.DoesNotExist:
+            pass
+        
+        # Try to delete in sentBox
+        try:
+            sentbox_instance = sentBox.objects.get(uid=uid, messageId=messageId)
+            sentbox_instance.assignedTo.remove(assign)
+            sentbox_instance.save()
+            return Response({'success': 'Assign deleted successfully in sentBox'}, status=status.HTTP_200_OK)
+        except sentBox.DoesNotExist:
+            pass
+        
+        # Try to delete in draftBox
+        try:
+            draftbox_instance = draftBox.objects.get(uid=uid, messageId=messageId)
+            draftbox_instance.assignedTo.remove(assign)
+            draftbox_instance.save()
+            return Response({'success': 'Assign deleted successfully in draftBox'}, status=status.HTTP_200_OK)
+        except draftBox.DoesNotExist:
+            pass
+
+        return Response({'error': 'No matching record found'}, status=status.HTTP_404_NOT_FOUND)

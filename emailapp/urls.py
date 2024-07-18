@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import ChannelAssignUserView, ChannelListCreateView, ChannelListView, CreateSuperUser, CreateUser, EmailListView, LoginView, ProfileListView, SentListView, DraftsListView, EmailRepliesView, UserListView
+from .views import ChannelAssignUserView, ChannelListCreateView, ChannelListView, CreateSuperUser, CreateUser, EmailListView, LoginView, MailBoxBundleListView, MailboxBundleCreateView, ProfileListView, SentListView, DraftsListView, EmailRepliesView, UpdateAssignedToView, UpdateChannel, UpdateMailboxBundle, UpdateProfile, UserListView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
@@ -16,14 +16,21 @@ urlpatterns = [
     path('create-superuser', CreateSuperUser.as_view(), name='create-superuser'),
     path('create-user', CreateUser.as_view(), name='create-user'),
 
-    path('channels', ChannelListView.as_view(), name='channels'),
-    path('channels-create', ChannelListCreateView.as_view(), name='channels-create'),
-
     path('user-list', UserListView.as_view(), name='user-list'),
     path('profile-list', ProfileListView.as_view(), name='profile-list'),
+    path('user-edit', UpdateProfile.as_view(), name='user-edit'),
 
+    path('channels', ChannelListView.as_view(), name='channels'),
+    path('channels-create', ChannelListCreateView.as_view(), name='channels-create'),
+    path('channels-edit', UpdateChannel.as_view(), name='channels-edit'),
     path('assign-channels', ChannelAssignUserView.as_view(), name='assign-channels'),
 
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    path('mailbox', MailBoxBundleListView.as_view(), name='mailbox'),
+    path('mailbox-create', MailboxBundleCreateView.as_view(), name='mailbox-create'),
+    path('mailbox-edit', UpdateMailboxBundle.as_view(), name='mailbox-edit'),
+
+    path('assignedTo-edit', UpdateAssignedToView.as_view(), name='assignedTo-edit'),
 ]
