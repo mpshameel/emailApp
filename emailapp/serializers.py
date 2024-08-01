@@ -132,6 +132,10 @@ class ChannelAssignSerializer(serializers.Serializer):
     profile_id = serializers.PrimaryKeyRelatedField(queryset=profile.objects.all(), many=False, required=False)
     channel_ids = serializers.PrimaryKeyRelatedField(queryset=channel.objects.all(), many=True, required=False)
 
+class ChannelAssignRemoveSerializer(serializers.Serializer):
+    profile_id = serializers.PrimaryKeyRelatedField(queryset=profile.objects.all(), many=False, required=False)
+    channel_ids = serializers.PrimaryKeyRelatedField(queryset=channel.objects.all(), many=False, required=False)
+
 
 class MailboxBundleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -160,3 +164,14 @@ class UpdateAssignedToSerializer(serializers.Serializer):
     uid = serializers.CharField()
     messageId = serializers.CharField()
     assignedTo = serializers.JSONField()
+
+class PriorityChangeSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    messageId = serializers.CharField()
+    priority = serializers.CharField()
+
+
+class StatusChangeSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    messageId = serializers.CharField()
+    status = serializers.CharField()

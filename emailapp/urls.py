@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import ChannelAssignUserView, ChannelListCreateView, ChannelListView, CreateSuperUser, CreateUser, EmailListView, LoginView, MailBoxBundleListView, MailboxBundleCreateView, ProfileListView, SentListView, DraftsListView, EmailRepliesView, UpdateAssignedToView, UpdateChannel, UpdateMailboxBundle, UpdateProfile, UserListView
+from .views import ChannelAssignUserView, ChannelListCreateView, ChannelListView, ChannelRemoveUserView, CreateSuperUser, CreateUser, EmailListView, LoginView, MailBoxBundleListView, MailboxBundleCreateView, PriorityChangeView, ProfileListView, SentListView, DraftsListView, EmailRepliesView, StatusChangeView, UpdateAssignedToView, UpdateChannel, UpdateMailboxBundle, UpdateProfile, UserListView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
@@ -24,6 +24,7 @@ urlpatterns = [
     path('channels-create', ChannelListCreateView.as_view(), name='channels-create'),
     path('channels-edit', UpdateChannel.as_view(), name='channels-edit'),
     path('assign-channels', ChannelAssignUserView.as_view(), name='assign-channels'),
+    path('assign-remove', ChannelRemoveUserView.as_view(), name='assign-remove'),
 
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
@@ -33,4 +34,6 @@ urlpatterns = [
     path('mailbox-edit', UpdateMailboxBundle.as_view(), name='mailbox-edit'),
 
     path('assignedTo-edit', UpdateAssignedToView.as_view(), name='assignedTo-edit'),
+    path('priority-edit', PriorityChangeView.as_view(), name='priority-edit'),
+    path('status-edit', StatusChangeView.as_view(), name='status-edit'),
 ]

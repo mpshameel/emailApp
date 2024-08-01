@@ -47,7 +47,7 @@ class mailBox(models.Model):
     status = models.CharField(max_length=100,default="open")
     is_deleted = models.BooleanField(default=False,blank=False,null=False,editable=True)
     created_at = models.DateTimeField(auto_now_add=True,blank=True, null=True)
-    assignedTo = models.JSONField(default=list, blank=True,null=True)
+    assignedTo = models.ManyToManyField(profile, blank=True)
     channel = models.JSONField(default=list, blank=True,null=True)
     priority = models.CharField(max_length=100,null=True,blank=True,default="")
 
@@ -90,7 +90,7 @@ class sentBox(models.Model):
     status = models.CharField(max_length=100,default="open")
     is_deleted = models.BooleanField(default=False,blank=False,null=False,editable=True)
     created_at = models.DateTimeField(auto_now_add=True,blank=True, null=True)
-    assignedTo = models.JSONField(default=list, blank=True,null=True)
+    assignedTo = models.ManyToManyField(profile, blank=True)
     channel = models.JSONField(default=list, blank=True,null=True)
     priority = models.CharField(max_length=100,null=True,blank=True,default="")
 
@@ -134,7 +134,7 @@ class draftBox(models.Model):
     status = models.CharField(max_length=100,default="open")
     is_deleted = models.BooleanField(default=False,blank=False,null=False,editable=True)
     created_at = models.DateTimeField(auto_now_add=True,blank=True, null=True)
-    assignedTo = models.JSONField(default=list, blank=True,null=True)
+    assignedTo = models.ManyToManyField(profile, blank=True)
     channel = models.JSONField(default=list, blank=True,null=True)
     priority = models.CharField(max_length=100,null=True,blank=True,default="")
 
