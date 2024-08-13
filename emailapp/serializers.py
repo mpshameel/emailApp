@@ -68,25 +68,52 @@ class EmailRequestSerializer(serializers.Serializer):
 class EmailReplyRequestSerializer(serializers.Serializer):
     message_id = serializers.CharField(max_length=255)
 
+class ListOrStringField(serializers.ListField):
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            return [data]
+        if isinstance(data, list):
+            return [data]
+        raise serializers.ValidationError("Invalid format for in_reply_to field.")
+
 class ReplySerializer(serializers.Serializer):
-    class Meta:
-        uid = serializers.CharField(max_length=255)
-        mailUsername = serializers.CharField(max_length=255)
-        subject = serializers.CharField(max_length=255)
-        fromMail = serializers.EmailField()
-        to_mails = serializers.ListField(child=serializers.EmailField())
-        date = serializers.DateTimeField()
-        text = serializers.CharField()
-        html = serializers.CharField()
-        flags = serializers.ListField(child=serializers.CharField())
-        cc = serializers.ListField(child=serializers.EmailField(), required=False, allow_null=True)
-        bcc = serializers.ListField(child=serializers.EmailField(), required=False, allow_null=True)
-        reply_to = serializers.CharField(max_length=255, required=False, allow_null=True)
-        messageId = serializers.CharField(max_length=255)
-        status = serializers.CharField(max_length=255)
-        assignedTo = serializers.CharField(max_length=255)
-        channel = serializers.CharField(max_length=255)
-        priority = serializers.CharField(max_length=255)
+    uid = serializers.CharField()
+    mailUsername = serializers.CharField()
+    subject = serializers.CharField()
+    fromMail = serializers.EmailField()
+    to_mails = serializers.ListField(
+        child=serializers.EmailField()
+    )
+    date = serializers.DateTimeField()
+    text = serializers.CharField()
+    html = serializers.CharField()
+    flags = serializers.ListField(
+        child=serializers.CharField()
+    )
+    cc = serializers.ListField(
+        child=serializers.EmailField(), required=False, default=[]
+    )
+    bcc = serializers.ListField(
+        child=serializers.EmailField(), required=False, default=[]
+    )
+    reply_to = serializers.ListField(
+        child=serializers.CharField(), required=False, default=[]
+    )
+    messageId = serializers.CharField()
+    status = serializers.CharField()
+    assignedTo = serializers.ListField(
+        child=serializers.IntegerField()
+    )
+    channel = serializers.ListField(
+        child=serializers.CharField(), required=False, default=[]
+    )
+    priority = serializers.CharField(required=False, allow_null=True)
+    attachments = serializers.ListField(
+        child=serializers.CharField(), required=False, source='attachements', default=[]
+    )
+    in_reply_to = serializers.ListField(
+        child=serializers.CharField(), required=False, default=[]
+    )
 
     # def to_representation(self, instance):
     #     ret = super().to_representation(instance)

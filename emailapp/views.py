@@ -393,8 +393,7 @@ class EmailRepliesView(APIView):
                     # if not message_id:
                     #     break
 
-                
-            serializer_detailMailReplies = mailBoxSerializer(allReplies, many=True)
+            serializer_detailMailReplies = ReplySerializer(allReplies, many=True)
             return Response(serializer_detailMailReplies.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
